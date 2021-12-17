@@ -1,0 +1,28 @@
+<div *ngIf="!client.isJoined  && !leave">
+  <app-check-media-device (emitJoinChannel)="joinChannel($event)">
+  </app-check-media-device>
+</div>
+
+<div *ngIf="client.isJoined  && !leave">
+  <app-streams [isPresenting]="isPresenting" [localUserUid]="client.rtcClient.uid" [remoteStreams]="remoteStreams"
+    [localUserCamera]="client.camera" [localUserAudio]="client.audio" [localVolumeLevel]="client.localVolumeLevel">
+  </app-streams>
+  loading {{client.loading |json }}
+  {{remoteStreams | json}}
+</div>
+
+
+<div class="footer__panel" *ngIf="client.isJoined && !leave">
+  <app-controls [isJoined]="client.isJoined" [audio]="client.audio" [camera]="client.camera"
+    [isScreenPresenting]="screenShareClient ? screenShareClient.isScreenPresenting : false"
+    [isPresenting]="isPresenting" [disableVideo]="client.disableVideo" (emitLeaveChannel)="leaveChannel()"
+    (emitVideoChannel)="videoChannel()" (emitScreenShare)="screenShare()" (emitStopScreenShare)="stopScreenShare()"
+    (emitMuteVolume)="muteVolume()">
+  </app-controls>
+</div>
+
+
+<div *ngIf="leave">
+  <app-leave (emitRejoin)="leave = false" (emitCredentials)="redirectToCredentials()">
+  </app-leave>
+</div>

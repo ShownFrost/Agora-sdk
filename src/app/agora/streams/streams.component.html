@@ -1,0 +1,37 @@
+<div [ngClass]="isPresenting ? 'streams' : ''">
+  <div class="screen_share">
+    <div *ngIf="localUserUid" id="local_stream_{{localUserUid}}"
+      [ngClass]="(remoteStreams | keyvalue).length === 0 ? 'only_local_stream_': 'local_stream_'">
+      <span [class]="!localUserAudio ? 'mic__unMute' : 'mic__mute'">
+        <div class="progress w-100" *ngIf="!localUserAudio">
+          <div class="progress-bar" role="progressbar" [ngStyle]="{'width': localVolumeLevel + '%'}">
+          </div>
+        </div>
+        {{!localUserAudio ? 'unmuted': 'muted'}}
+      </span>
+      <span class="initials">
+        {{localUserUid}}
+      </span>
+    </div>
+    <div id="remote_stream_{{item.key}}" class="screen_share_user"
+      *ngFor="let item of (remoteStreams | withScreenShare) | keyvalue; trackBy:trackMe">
+    </div>
+  </div>
+  <div [ngClass]="isPresenting ? 'remote_users__withScreenShare' : 'remote_users__withOutScreenShare'">
+    <div id="remote_stream_{{item.key}}"
+      [ngClass]="isPresenting ? 'stream__withScreenShare': 'stream__withOutScreenShare'"
+      *ngFor="let item of (remoteStreams | withoutScreenShare) | keyvalue; trackBy:trackMe">
+      <span [class]="item.value.isAudio ? 'mic__unMute' : 'mic__mute'">
+        <div class="progress w-100" *ngIf="item.value.isAudio">
+          <div class="progress-bar" role="progressbar" [ngStyle]="{'width': item.value.volume + '%'}">
+            {{item.value.volume}}
+          </div>
+        </div>
+        {{item.value.isAudio ? 'unmuted': 'muted'}}
+      </span>
+      <span class="initials">
+        {{item.key}}
+      </span>
+    </div>
+  </div>
+</div>

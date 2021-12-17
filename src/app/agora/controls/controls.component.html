@@ -1,0 +1,20 @@
+<button class="btn btn-danger ms-2" [disabled]="!isJoined" (click)="leaveChannel()">
+  leave
+</button>
+
+<button class="btn ms-2" [ngClass]="audio ? 'btn-info':' btn-warning'" [disabled]="!isJoined" (click)="muteVolume()">
+  {{(audio) ? 'Mute' : 'unMute'}}
+</button>
+
+<button id="camera" class="btn btn-info ms-2" [disabled]="!isJoined || disableVideo" (click)="videoChannel()">
+  {{(camera) ? 'Video Off' : 'Video on'}}
+</button>
+
+<button *ngIf="!isScreenPresenting" class="btn btn-success ms-2" [disabled]="!isJoined || isPresenting"
+  (click)="screenShare()">
+  shareScreen
+</button>
+<button *ngIf="isScreenPresenting" class="btn btn-secondary ms-2" [disabled]="!isScreenPresenting || !isPresenting"
+  (click)="stopScreenShare()">
+  Stop shareScreen
+</button>

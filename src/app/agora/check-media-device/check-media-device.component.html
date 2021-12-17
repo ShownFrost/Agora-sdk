@@ -1,0 +1,28 @@
+<div class="d-flex justify-content-around align-items-center height_vh100">
+  <div id="check_{{selectedCameraId}}" class="rounded only_local_stream_ w-50 height_vh50">
+    <span [class]="true ? 'mic__unMute' : 'mic__mute'">
+      <div class="progress w-100" *ngIf="audio">
+        <div class="progress-bar" role="progressbar" [ngStyle]="{'width': checkVolumeLevel*100 + '%'}">
+        </div>
+      </div>
+      {{audio ? 'unmuted': 'muted'}}
+    </span>
+    <span class="initials">
+      Camera Off
+    </span>
+    <button id="audio" [disabled]="loading" class="btn btn-warning me-100 position-absolute bottom_5"
+      (click)="toggleAudio()">
+      {{audio ? 'Mute': 'unMute'}}
+    </button>
+    <button id="camera" [disabled]="loading" class="btn btn-info ms-100 position-absolute bottom_5"
+      (click)="toggleCamera()">
+      {{camera ? 'video On': 'video Off'}}
+    </button>
+  </div>
+  <div class="text-center">
+    <h1>
+      Generic Title
+    </h1>
+    <button class="btn btn-success w-100" [disabled]="loading" (click)="joinChanel()">Join</button>
+  </div>
+</div>
