@@ -3,21 +3,20 @@
   </app-check-media-device>
 </div>
 
-<div *ngIf="client.isJoined  && !leave">
+<div class="dark-brown" *ngIf="client.isJoined  && !leave">
   <app-streams [isPresenting]="isPresenting" [localUserUid]="client.rtcClient.uid" [remoteStreams]="remoteStreams"
-    [localUserCamera]="client.camera" [localUserAudio]="client.audio" [localVolumeLevel]="client.localVolumeLevel">
+    [localUserCamera]="client.camera" [localUserAudio]="client.audio" [localVolumeLevel]="client.localVolumeLevel"
+    [closePeopleList]="closePeopleList" (emitCloseList)="closePeopleList = $event">
   </app-streams>
-  loading {{client.loading |json }}
-  {{remoteStreams | json}}
 </div>
 
 
-<div class="footer__panel" *ngIf="client.isJoined && !leave">
-  <app-controls [isJoined]="client.isJoined" [audio]="client.audio" [camera]="client.camera"
+<div *ngIf="client.isJoined && !leave">
+  <app-controls [peopleList]="closePeopleList" [audio]="client.audio" [camera]="client.camera"
     [isScreenPresenting]="screenShareClient ? screenShareClient.isScreenPresenting : false"
     [isPresenting]="isPresenting" [disableVideo]="client.disableVideo" (emitLeaveChannel)="leaveChannel()"
     (emitVideoChannel)="videoChannel()" (emitScreenShare)="screenShare()" (emitStopScreenShare)="stopScreenShare()"
-    (emitMuteVolume)="muteVolume()">
+    (emitMuteVolume)="muteVolume()" (emitPeopleList)="closePeopleList = $event">
   </app-controls>
 </div>
 
@@ -26,3 +25,4 @@
   <app-leave (emitRejoin)="leave = false" (emitCredentials)="redirectToCredentials()">
   </app-leave>
 </div>
+<app-toaster *ngIf="toasterMsg" [toasterMsg]="toasterMsg" (emitToasterMsg)="toasterMsg = $event"></app-toaster>

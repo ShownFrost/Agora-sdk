@@ -1,3 +1,6 @@
+/**
+ * Angular imports.
+ */
 import { Pipe, PipeTransform } from '@angular/core';
 
 /**
@@ -5,6 +8,9 @@ import { Pipe, PipeTransform } from '@angular/core';
  */
 import { RemoteStream } from './remoteStream';
 
+/**
+ * Pipe to return all the remote user except screen share user.
+ */
 @Pipe({
   name: 'withoutScreenShare',
   pure: false

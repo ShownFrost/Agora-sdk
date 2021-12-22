@@ -1,9 +1,27 @@
+/**
+ * Angular imports.
+ */
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+
+/**
+ * agora rtc sdk imports.
+ */
 import { IAgoraRTCRemoteUser, UID } from "agora-rtc-sdk-ng"
+
+/**
+ * Rxjs imports.
+ */
 import { Subscription } from 'rxjs';
+
+/**
+ * Agora model imports.
+ */
 import { AgStream } from '../../agora/models/agStream';
 import { RemoteStream } from '../../agora/models/remoteStream';
 
+/**
+ * Main component where Rtc client is create and ready to join.
+ */
 @Component({
   selector: 'app-main',
   templateUrl: './main.component.html',
@@ -11,30 +29,31 @@ import { RemoteStream } from '../../agora/models/remoteStream';
 })
 export class MainComponent implements OnInit, OnDestroy {
 
+  /**
+   * Receive the appId, channel and token of agora.
+   */
   @Input() appId = '';
-  // Set the channel name.
   @Input() channel = '';
-  // Pass a token if your project enables the App Certificate.
   @Input() token = '';
 
-  @Input() preAudio = false;
-
-  @Input() preVideo = false;
-
+  /**
+   * Emit the redirect to credentials.
+   */
   @Output() emitRedirectToCredentials = new EventEmitter<boolean>();
 
-  public client!: AgStream;
-
-  public screenShareClient!: AgStream;
-
-  public remoteStreams: { [name: number]: RemoteStream } = {};
+  /**
+   * Subscription for remote info update, left, join, error, volume indicator.
+   */
   private userInfoUpdatedSub!: Subscription;
   private userLeftSub!: Subscription;
   private userJoinedSub!: Subscription;
-  private _isPresenting = false;
   private errorsSub!: Subscription;
   private volumeIndicatorSub!: Subscription;
-  public leave = false;
+
+  /**
+   * setter and getter for presenting flag.
+   */
+  private _isPresenting = false;
   set isPresenting(val) {
     this._isPresenting = val;
   }
@@ -42,39 +61,52 @@ export class MainComponent implements OnInit, OnDestroy {
     return this._isPresenting;
   }
 
+  /**
+   * Public flag for client and close people list
+   * ScreenShare client,, remote stream, toaster msg, leave flag.
+   */
+  public client!: AgStream;
+  public closePeopleList = false;
+  public screenShareClient!: AgStream;
+  public remoteStreams: { [name: number]: RemoteStream } = {};
+  public toasterMsg = '';
+  public leave = false;
+
+  /**
+   * Create the agora client and initiate the listeners event.
+   */
   ngOnInit(): void {
-    this.client = new AgStream(this.appId, this.channel, this.token, false, this.preAudio, this.preVideo);
-    console.log('client', this.client);
+    this.client = new AgStream(this.appId, this.channel, this.token, false);
     this.internalEventListener();
   }
 
-
-  internalEventListener(): void {
+  /**
+   * Listeners event like remote info update, left, join, error, volume indicator.
+   */
+  private internalEventListener(): void {
     this.userJoinedSub = this.client.userJoined.subscribe((user: IAgoraRTCRemoteUser) => {
       console.log('userJoinedSub', user);
       const uid = Number(user.uid);
+      this.toasterMsg = uid.toString() + ' is joined the call';;
       if (uid === 1) {
-        console.log('yes');
-        console.log('user.hasAudio, user.hasVideo', user.hasAudio, user.hasVideo, user.audioTrack);
+        this.toasterMsg = uid.toString() + ' start Presenting the screen';
         this.remoteStreams[uid] = new RemoteStream(uid, true, user.hasAudio, user.hasVideo, 0);
         this.isPresenting = true;
       } else {
-        console.log('not');
-        console.log('user.hasAudio, user.hasVideo', user.hasAudio, user.hasVideo, user.audioTrack);
         this.remoteStreams[uid] = new RemoteStream(uid, false, true, true, 0);
-        console.log('userJoinedSub2', user);
       }
     })
     this.userLeftSub = this.client.userLeft.subscribe((res: { user: IAgoraRTCRemoteUser; reason: string; }) => {
       console.log('userLeft', res);
       const id = Number(res.user.uid);
+      this.toasterMsg = id.toString() + ' is left the call';
       if (this.remoteStreams.hasOwnProperty(id)) {
         if (id === 1) {
           this.isPresenting = false;
+          this.toasterMsg = id.toString() + ' stop presenting the screen';
         }
         delete this.remoteStreams[id];
       }
-      console.log(this.remoteStreams);
     })
     this.userInfoUpdatedSub = this.client.userInfoUpdated.subscribe((res: { uid: UID, msg: string }) => {
       console.log('userInfoUpdated', res);
@@ -103,16 +135,14 @@ export class MainComponent implements OnInit, OnDestroy {
           this.client.localVolumeLevel = user.level;
         }
         if (this.remoteStreams.hasOwnProperty(Number(user.uid))) {
-          console.log('inside::::::::::', user.level);
           this.remoteStreams[Number(user.uid)].volume = user.level;
         }
       }
     })
     this.errorsSub = this.client.errors.subscribe(async (res: { code: string | number; msg: string; }) => {
-      console.log("PERMISSION_DENIED", res);
       switch (res.code) {
         case 'CAN_NOT_GET_GATEWAY_SERVER':
-          console.log('calling');
+          this.toasterMsg = res.msg;
           await this.leaveChannel();
           break;
         default:
@@ -121,12 +151,16 @@ export class MainComponent implements OnInit, OnDestroy {
     })
   }
 
+  /**
+   * Join the the created channel initially.
+   */
   async joinChannel(event: { camera: boolean, audio: boolean }): Promise<void> {
-    console.log('joinChannel event', event);
-
     await this.client.joinChannel(this.appId, this.channel, this.token, event.audio, event.camera);
   }
 
+  /**
+   * Leave the chanel.
+   */
   async leaveChannel(): Promise<void> {
     if (this.screenShareClient && this.screenShareClient.isScreenPresenting === true) {
       await this.stopScreenShare();
@@ -137,28 +171,41 @@ export class MainComponent implements OnInit, OnDestroy {
     this.leave = true;
   }
 
+  /**
+   * Toggle the mic and camera of local client.
+   */
   muteVolume(): void {
     this.client.audio = !this.client.audio;
   }
-
-  async stopScreenShare(): Promise<void> {
-    await this.screenShareClient.stopScreenSharing();
-  }
-
-  async screenShare(): Promise<void> {
-    this.screenShareClient = new AgStream(this.appId, this.channel, this.token, true, false, false);
-    await this.screenShareClient.joinScreenShareChannel(this.appId, this.channel, this.token);
-  }
-
   videoChannel(): void {
     this.client.camera = !this.client.camera;
   }
 
+  /**
+   * Stop the ScreenShare of local client.
+   */
+  async stopScreenShare(): Promise<void> {
+    await this.screenShareClient.stopScreenSharing();
+  }
+
+  /**
+   * Create the new client fo the screen share and join the same channel.
+   */
+  async screenShare(): Promise<void> {
+    this.screenShareClient = new AgStream(this.appId, this.channel, this.token, true);
+    await this.screenShareClient.joinScreenShareChannel(this.appId, this.channel, this.token);
+  }
+
+  /**
+   * Emit the redirect to credentials.
+   */
   redirectToCredentials(): void {
     this.emitRedirectToCredentials.emit(true);
   }
 
-
+  /**
+   * Unsubscribe the subscription.
+   */
   ngOnDestroy(): void {
     if (this.userInfoUpdatedSub) {
       this.userInfoUpdatedSub.unsubscribe();

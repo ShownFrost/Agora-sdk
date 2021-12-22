@@ -1,10 +1,18 @@
+/**
+ * Angular imports.
+ */
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
-import { AppRoutingModule } from './app-routing.module';
+/**
+ * Component imports.
+ */
 import { AppComponent } from './app.component';
-import { WithoutScreenSharePipe } from './agora/models/withoutScreenShare';
-import { WithScreenSharePipe } from './agora/models/withScreenShare.pipe';
+
+/**
+ * Module imports.
+ */
+import { AppRoutingModule } from './app-routing.module';
 
 @NgModule({
   declarations: [
