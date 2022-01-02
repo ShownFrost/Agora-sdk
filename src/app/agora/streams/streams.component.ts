@@ -30,20 +30,15 @@ export class StreamsComponent implements OnInit, OnDestroy {
 
   /**
    * Received presenting, localUserId, remote stream,
-   * localUserCamera, localUserAudio, localVolumeLevel, closePeopleList
+   * localUserCamera, localUserAudio, localVolumeLevel
    */
   @Input() isPresenting = false;
   @Input() localUserUid: undefined | UID;
   @Input() remoteStreams: { [name: number]: RemoteStream } = {};
-  @Input() localUserCamera = false;
   @Input() localUserAudio = false;
   @Input() localVolumeLevel = 0;
-  @Input() closePeopleList = false;
-
-  /**
-   * Emit the close list event.
-   */
-  @Output() emitCloseList = new EventEmitter<boolean>();
+  @Input() localUserName!: string;
+  @Input() pinUser!: { status: boolean, key: number };
 
   /**
    * Fullscreen mode flag.
@@ -119,14 +114,6 @@ export class StreamsComponent implements OnInit, OnDestroy {
     } else if (elem.msExitFullscreen) { /* IE11 */
       elem.msExitFullscreen();
     }
-  }
-
-  /**
-   * Emit the close list event.
-   */
-  peopleList(event: boolean): void {
-    this.closePeopleList = event;
-    this.emitCloseList.emit(event);
   }
 
   /**

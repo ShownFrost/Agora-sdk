@@ -9,6 +9,11 @@ import AgoraRTC, { ConnectionDisconnectedReason, ConnectionState, IAgoraRTCClien
 import { ReplaySubject } from "rxjs";
 
 /**
+ * Agora RTM imports.
+ */
+import AgoraRTM, { RtmChannel, RtmClient, RtmMessage } from 'agora-rtm-sdk'
+
+/**
  * Create the instance of the agora stream.
  */
 export class AgStream {
@@ -16,7 +21,7 @@ export class AgStream {
    * Private appId, channel, token of agora to join the channel
    * localAudioTrack and localVideoTrack object of
    * Uid of local streamer.
-   * screenShareUid of the streamer which is 1 always.
+   * screenShareUid of the streamer which is 10000 always.
    * localScreenTrack for the screen share tracking.
    */
   private appId: string;
@@ -27,6 +32,8 @@ export class AgStream {
   private uid!: UID;
   private screenShareUid!: number | string;
   private localScreenTrack!: any;
+  private rtmClient: RtmClient;
+  private rtmChannel!: RtmChannel;
 
   /**
    * Public rtc client object.
@@ -112,6 +119,8 @@ export class AgStream {
   public userLeft = new ReplaySubject<{ user: IAgoraRTCRemoteUser, reason: string }>();
   public trackEnded = new ReplaySubject<string>();
   public errors = new ReplaySubject<{ code: number | string; msg: string }>();
+  public peerToPeerMsg = new ReplaySubject<{ text: string, messageType: string; sendPeerId: string }>();
+  public chatMessages: { memberId: string; memberName: string; message: string; messageType: string; timestamp: number }[] = [];
 
 
   /**
@@ -123,6 +132,7 @@ export class AgStream {
     this.token = token;
     this.isScreenPresenting = isScreenPresenting;
     this.rtcClient = this.createLocalClient();
+    this.rtmClient = AgoraRTM.createInstance(appId)
     if (!isScreenPresenting) {
       this.userPublish();
     }
@@ -140,11 +150,12 @@ export class AgStream {
    * Join the Local streamer client channel.
    * Check the pre flags for camera and audio.
    */
-  async joinChannel(appId: string, channel: string, token: string, audio: boolean, camera: boolean) {
+  async joinChannel(appId: string, channel: string, token: string, audio: boolean, camera: boolean, username: string) {
     this.loading = true;
-    await this.rtcClient.join(appId, channel, token, null)
+    await this.rtcClient.join(appId, channel, null, null)
       .then(async (value: UID) => {
         this.uid = value;
+        await this.loginRTM(username);
         this.isJoined = true;
         this.rtcClient.enableAudioVolumeIndicator();
         if (audio) {
@@ -155,19 +166,112 @@ export class AgStream {
         }
       })
       .catch((res: any) => {
+        alert(res.message);
+        this.errors.next({ code: res.code, msg: res.message });
+        return;
+      });
+    this.loading = false;
+  }
+
+  /**
+   * Login into the RTM account.
+   */
+  async loginRTM(username: string): Promise<void> {
+    await this.rtmClient.login({ uid: this.uid.toString() })
+      .then(async () => {
+        await this.rtmClient.setLocalUserAttributes({ ['Name']: username });
+        await this.createChannel();
+      })
+      .catch((res: any) => {
+        console.log('loginRTM error', res.message);
+        this.errors.next({ code: res.code, msg: res.message });
+      });
+  }
+
+  /**
+   * Login into the client rtm for screen share.
+   */
+  async screenShareLoginRTM(username: string, uid: string): Promise<void> {
+    await this.rtmClient.login({ uid: uid })
+      .then(async () => {
+        await this.rtmClient.setLocalUserAttributes({ ['Name']: username });
+      })
+      .catch((res: any) => {
+        this.errors.next({ code: res.code, msg: res.message });
+      });
+  }
+
+  /**
+   * Get user name from the rtm.
+   */
+  async getUserAttribute(id: string): Promise<any> {
+    return await this.rtmClient.getUserAttributes(id);
+  }
+
+  /**
+   * Create the RTM Channel.
+   */
+  async createChannel(): Promise<void> {
+    this.rtmChannel = await this.rtmClient.createChannel(this.channel);
+    await this.joinRTM();
+  }
+
+  /**
+   * Join the RTM Channel.
+   */
+  async joinRTM(): Promise<void> {
+    await this.rtmChannel.join()
+      .then(() => {
+        this.rtmEventListener();
+      })
+      .catch((res: any) => {
+        alert(res.message);
         this.errors.next({ code: res.code, msg: res.message });
         return;
       });
   }
 
   /**
+   * EventListener of the rtm client.
+   */
+  rtmEventListener(): void {
+    this.rtmChannel.on('ChannelMessage', async (message: any, memberId: string) => {
+      console.log("ChannelMessage", message, memberId);
+      let name = '';
+      await this.getUserAttribute(memberId)
+        .then((value) => {
+          name = value.Name;
+        })
+        .catch((reason: any) => console.log("getUserAttribute error", reason));
+      this.chatMessages.push({
+        memberId,
+        memberName: name,
+        message: message.text,
+        messageType: message.messageType,
+        timestamp: Date.now()
+      })
+    })
+    this.rtmChannel.on('MemberJoined', (memberId: string) => {
+      console.log("MemberJoined", memberId);
+    })
+    this.rtmChannel.on('MemberLeft', (memberId: string) => {
+      console.log("MemberLeft", memberId);
+    })
+    this.rtmClient.on('MessageFromPeer', (message: any, peerId: string) => {
+      console.log("MessageFromPeer", message, peerId);
+      this.peerToPeerMsg.next({ text: message.text, messageType: message.messageType, sendPeerId: peerId });
+    })
+  }
+
+  /**
    * Join the Local screen share client channel.
    */
-  async joinScreenShareChannel(appId: string, channel: string, token: string) {
-    await this.rtcClient.join(appId, channel, token, 1)
+  async joinScreenShareChannel(appId: string, channel: string, token: string, username: string, uid: number) {
+    await this.rtcClient.join(appId, channel, null, uid)
       .then(async (value: UID) => {
         this.screenShareUid = value;
-        this.publishScreenTracks();
+        await this.publishScreenTracks();
+        this.screenShareLoginRTM(username, uid.toString());
         this.isScreenPresenting = true;
       })
       .catch((res: any) => {
@@ -305,10 +409,42 @@ export class AgStream {
   }
 
   /**
+   * Send message in group for all users.
+   */
+  async sendMessageToGroup(event: { message: string; memberName: string; timestamp: number }): Promise<void> {
+    await this.rtmChannel.sendMessage({ text: event.message })
+      .then(() => {
+        this.chatMessages.push({
+          memberId: this.uid.toString(),
+          memberName: event.memberName,
+          message: event.message,
+          messageType: 'TEXT',
+          timestamp: event.timestamp
+        })
+      })
+      .catch((reason: any) => {
+        alert(reason.message)
+      });
+  }
+
+  /**
+   * Send message to the particular user.
+   */
+  async sendMessageToPeer(message: string, peerId: string): Promise<void> {
+    await this.rtmClient.sendMessageToPeer(
+      { text: message },
+      peerId,
+    ).then(sendResult => {
+      console.log('sendResult', sendResult);
+    })
+  }
+
+  /**
    * Leave call.
    * stop the localAudioTrack and localVideoTrack.
    */
   async leaveCall(): Promise<void> {
+    this.loading = true;
     if (!this.audio) {
       await this.localAudioTrack.close();
     }
@@ -322,5 +458,6 @@ export class AgStream {
 
     await this.rtcClient.leave();
     this.isJoined = false;
+    this.loading = false;
   }
 }

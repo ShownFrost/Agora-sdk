@@ -16,6 +16,8 @@ import { PeopleListComponent } from './people-list/people-list.component';
 import { LeaveComponent } from './leave/leave.component';
 import { ToasterComponent } from './toaster/toaster.component';
 import { CheckMediaDeviceComponent } from './check-media-device/check-media-device.component';
+import { GroupChatComponent } from './group-chat/group-chat.component';
+import { RecordingComponent } from './recording/recording.component';
 
 /**
  * Module imports.
@@ -40,7 +42,9 @@ import { WithScreenSharePipe } from './models/withScreenShare.pipe';
     CheckMediaDeviceComponent,
     LeaveComponent,
     PeopleListComponent,
-    ToasterComponent
+    ToasterComponent,
+    GroupChatComponent,
+    RecordingComponent
   ],
   imports: [
     CommonModule,

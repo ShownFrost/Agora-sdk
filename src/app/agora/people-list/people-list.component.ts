@@ -27,12 +27,14 @@ export class PeopleListComponent {
    * Receive the people list and local user details.
    */
   @Input() peopleList: { [name: number]: RemoteStream } = {};
-  @Input() localUser!: { uid: UID | undefined; level: number; isAudio: boolean; };
+  @Input() localUser!: { uid: UID | undefined; level: number; isAudio: boolean; userName: string };
 
   /**
-   * Emit close list flag.
+   * Emit close list flag and peer to peer message.
    */
   @Output() emitCloseList = new EventEmitter<boolean>();
+  @Output() emitSendMessageToPeer = new EventEmitter<{ message: string; peerId: string; }>();
+  @Output() emitPinKey = new EventEmitter<string>();
 
   /**
    * Emit close list flag.
@@ -41,4 +43,32 @@ export class PeopleListComponent {
     this.emitCloseList.emit(false);
   }
 
+  /**
+   * Emit mute-audio remote user.
+   */
+  muteRemoteUser(peerId: string): void {
+    this.emitSendMessageToPeer.emit({ message: 'mute-audio', peerId: peerId });
+  }
+
+  /**
+   * Emit leave channel remote user.
+   */
+  removeRemoteUser(peerId: string): void {
+    console.log('removeRemoteUser', peerId);
+    this.emitSendMessageToPeer.emit({ message: 'leave-channel', peerId: peerId });
+  }
+
+  /**
+   * Track the indexed stream.
+   */
+  trackMe(index: any, stream: any): void {
+    return index;
+  }
+
+  /**
+   * Emit pin user key.
+   */
+  pinUser(pin: string): void {
+    this.emitPinKey.emit(pin);
+  }
 }

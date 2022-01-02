@@ -1,0 +1,35 @@
+<div class="">
+  <div class="d-flex justify-content-between">
+    <h4>In-call messages</h4>
+    <p class="cursor-pointer" (click)="closeChat()">X</p>
+  </div>
+  <hr>
+  <div>
+    <ul class="p-0 scroll-58vh">
+      <li class="d-flex justify-content-between mb-2" *ngFor="let msg of chatMessages">
+        <div>
+          <small class="m-0 text-dark">
+            <span *ngIf="memberId == msg.memberId">
+              You
+            </span>
+            <span *ngIf="memberId != msg.memberId">
+              {{msg.memberName}}
+            </span>
+            <span class="text-secondary ms-3">
+              {{msg.timestamp| date:'h:mm a'}}
+            </span>
+          </small>
+          <p>
+            {{msg.message}}
+          </p>
+        </div>
+      </li>
+    </ul>
+    <form [formGroup]="chatForm" (ngSubmit)="sendMessage()">
+      <div class="input-group mb-3">
+        <input type="text" class="form-control" formControlName="message" placeholder="Send a message to everyone">
+        <button [disabled]="chatForm.invalid" class="btn btn-primary circle" type="submit">|></button>
+      </div>
+    </form>
+  </div>
+</div>

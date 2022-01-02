@@ -1,9 +1,10 @@
 <div class="d-flex justify-content-around align-items-center height_vh100">
   <div id="check_{{selectedCameraId}}" class="rounded only_local_stream_ w-50 height_vh50">
     <span [class]="true ? 'mic__unMute' : 'mic__mute'">
-      <div class="progress w-100" *ngIf="audio && checkVolumeLevel * 100 > 1">
-        <div class="progress-bar" role="progressbar" [ngStyle]="{'width': checkVolumeLevel * 100+ '%'}">
-        </div>
+      <div *ngIf="audio" class="bouncing-loader">
+        <div [ngClass]="checkVolumeLevel * 100 > 1 ? 'bounce': 'notBounce'"></div>
+        <div [ngClass]="checkVolumeLevel * 100 > 1 ? 'bounce': 'notBounce'"></div>
+        <div [ngClass]="checkVolumeLevel * 100 > 1 ? 'bounce': 'notBounce'"></div>
       </div>
       <span *ngIf="!audio">
         <svg width="24px" height="24px" viewBox="0 0 24 24" class="fill-white">
@@ -17,7 +18,7 @@
     <span class="initials">
       Camera Off
     </span>
-    <button id="audio" [disabled]="loading" [ngClass]="audio ? 'btn-secondary light-brown': 'btn-danger'"
+    <button id="audio" [disabled]="mediaChecking" [ngClass]="audio ? 'btn-secondary light-brown': 'btn-danger'"
       class="btn me-70 position-absolute bottom_10 circle" (click)="toggleAudio()">
       <span *ngIf="!audio">
         <svg width="24px" height="24px" viewBox="0 0 24 24" class="fill-white">
@@ -36,7 +37,7 @@
         </svg>
       </span>
     </button>
-    <button id="camera" [disabled]="loading" [ngClass]="camera ? 'btn-secondary light-brown': 'btn-danger'"
+    <button id="camera" [disabled]="mediaChecking" [ngClass]="camera ? 'btn-secondary light-brown': 'btn-danger'"
       class="btn ms-70 position-absolute bottom_10 circle" (click)="toggleCamera()">
       <span *ngIf="camera">
         <svg focusable="false" width="24" height="24" viewBox="0 0 24 24" class="fill-white">
@@ -58,6 +59,15 @@
     <h1>
       Ready to join ?
     </h1>
-    <button class="btn btn-success w-100 rounded-lg" [disabled]="loading" (click)="joinChanel()">Join</button>
+    <form [formGroup]="joinForm" (ngSubmit)="joinChanel()">
+      <div class="input-group mb-3">
+        <input type="text" class="form-control" placeholder="Username" formControlName="userName">
+      </div>
+      <button type="submit" class="btn btn-success w-100 rounded-lg" [disabled]="mediaChecking || joinForm.invalid">
+        Join
+      </button>
+    </form>
   </div>
+</div>
+<div [ngClass]="{'loading': loading}">
 </div>

@@ -14,13 +14,28 @@ import { AppComponent } from './app.component';
  */
 import { AppRoutingModule } from './app-routing.module';
 
+/**
+ * Interceptor imports.
+ */
+import { httpInterceptorProviders } from './httpInterceptors';
+
+/**
+ * Service imports.
+ */
+import { ApiService } from 'src/app/services/api/api.service';
+import { HttpClientModule } from '@angular/common/http';
+
 @NgModule({
   declarations: [
     AppComponent
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    HttpClientModule
+  ],
+  providers: [
+    httpInterceptorProviders
   ],
   bootstrap: [AppComponent]
 })

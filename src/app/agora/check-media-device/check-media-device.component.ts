@@ -2,6 +2,7 @@
  * Angular imports.
  */
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 /**
  * Agora rtc sdk imports.
@@ -21,7 +22,7 @@ export class CheckMediaDeviceComponent implements OnInit {
   /**
    * Output the joinChannel.
    */
-  @Output() emitJoinChannel = new EventEmitter<{ camera: boolean, audio: boolean }>();
+  @Output() emitJoinChannel = new EventEmitter<{ camera: boolean; audio: boolean; userName: string }>();
 
   /**
    * Private variables MicrophoneId, videoTrack and audioTrack object.
@@ -65,13 +66,27 @@ export class CheckMediaDeviceComponent implements OnInit {
    */
   public selectedCameraId!: string;
   public checkVolumeLevel = 0;
-  public loading = true;
+  public mediaChecking = true;
+  public loading = false;
+
+  /**
+   * Form Group, Submitted and login flag.
+   */
+  public joinForm!: FormGroup;
+
+  /**
+   * Create necessary instances.
+   */
+  constructor(private formBuilder: FormBuilder) { }
 
 
   /**
    * Call the getDeviceInfo function.
    */
   ngOnInit(): void {
+    this.joinForm = this.formBuilder.group({
+      userName: ['', Validators.required]
+    })
     this.getDeviceInfo();
   }
 
@@ -99,7 +114,7 @@ export class CheckMediaDeviceComponent implements OnInit {
         this.videoTrack = videoTrack;
         this.audioTrack = audioTrack;
         videoTrack.play("check_" + this.selectedCameraId);
-        this.loading = false
+        this.mediaChecking = false
         this._camera = true;
         this._audio = true;
         this.interval = setInterval(() => {
@@ -132,8 +147,21 @@ export class CheckMediaDeviceComponent implements OnInit {
    * And Off Checking audio and video.
    */
   joinChanel(): void {
+    this.loading = true;
+    this.joinForm.setValue({ userName: this.joinForm.value.userName.trim() })
+    /**
+     * stop here if form is invalid
+     */
+    if (this.joinForm.invalid) {
+      return;
+    }
+
     clearInterval(this.interval);
-    this.emitJoinChannel.emit({ camera: this._camera, audio: this._audio });
+    this.emitJoinChannel.emit({
+      camera: this._camera,
+      audio: this._audio,
+      userName: this.joinForm.value.userName
+    });
     this.camera = false;
     this.audio = false;
   }

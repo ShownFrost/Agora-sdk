@@ -39,9 +39,9 @@ export class AgoraCredentialsComponent implements OnInit {
    */
   ngOnInit(): void {
     this.agoraForm = this.formBuilder.group({
-      appId: ['29b796615e624917a1212539f7551fb9', Validators.required],
+      appId: ['2e493d6575084c7780e6ac621bc40357', Validators.required],
       channelName: ['demo_channel_name', Validators.required],
-      token: ['00629b796615e624917a1212539f7551fb9IAALWqDYswqbFUrxtMSPfTeDz+gFH43wmtki93/OFQXt3o4kO3kAAAAAEABaBdmzrxXEYQEAAQCvFcRh', Validators.required]
+      token: ['']
     })
   }
 

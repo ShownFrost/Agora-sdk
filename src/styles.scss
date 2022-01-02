@@ -10,6 +10,9 @@ body {
 * {
   box-sizing: border-box;
 }
+.svg-hover:hover {
+  fill: rgba(26, 115, 232, 0.902);
+}
 .dark-brown {
   background-color: #202124;
 }
@@ -74,7 +77,7 @@ video {
   width: 235px;
   height: 132px;
   position: fixed;
-  right: 20px;
+  left: 20px;
   bottom: 100px;
   z-index: 99;
   border-radius: 8px;
@@ -84,7 +87,7 @@ video {
 }
 .you {
   position: absolute;
-  bottom: 10px;
+  top: 10px;
   left: 10px;
   font-size: 1rem;
   z-index: 1;
@@ -122,16 +125,15 @@ video {
 .mic__unMute {
   position: absolute;
   bottom: 10px;
-  right: 30px;
-  color: green;
+  right: 10px;
+  color: white;
   z-index: 1;
-  width: 15%;
 }
 .mic__mute {
   position: absolute;
   bottom: 10px;
-  right: 30px;
-  color: red;
+  right: 10px;
+  color: white;
   z-index: 1;
 }
 .streams {
@@ -181,9 +183,54 @@ video {
   max-width: 100%;
 }
 .initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
   color: white;
-  font-size: 18px;
   position: absolute;
+}
+.box-140 {
+  width: 140px;
+  height: 140px;
+  font-size: 3rem;
+  background-color: rgb(random(255), random(255), random(255));
+}
+.box-120 {
+  width: 120px;
+  height: 120px;
+  font-size: 3rem;
+  background-color: rgb(random(255), random(255), random(255));
+}
+.box-100 {
+  width: 100px;
+  height: 100px;
+  font-size: 2rem;
+  background-color: rgb(random(255), random(255), random(255));
+}
+.box-80 {
+  width: 80px;
+  height: 80px;
+  font-size: 2rem;
+  background-color: rgb(random(255), random(255), random(255));
+}
+.box-60 {
+  width: 60px;
+  height: 60px;
+  font-size: 1rem;
+  background-color: rgb(random(255), random(255), random(255));
+}
+.box-40 {
+  width: 40px;
+  height: 40px;
+  font-size: 1rem;
+  background-color: rgb(random(255), random(255), random(255));
+}
+.box-30 {
+  width: 30px;
+  height: 30px;
+  font-size: 1rem;
+  background-color: rgb(random(255), random(255), random(255));
 }
 .footer__panel {
   position: fixed;
@@ -222,7 +269,7 @@ video {
   height: auto;
   border-radius: 6px;
   width: 25%;
-  color: black;
+  color: #202124;
   background-color: white;
   z-index: 999;
   padding: 10px;
@@ -230,6 +277,9 @@ video {
 }
 .fill-white {
   fill: white;
+}
+.fill-blue {
+  fill: rgba(26, 115, 232, 0.902);
 }
 .circle {
   border-radius: 50%;
@@ -239,4 +289,102 @@ video {
 .scroll-64vh {
   overflow-y: scroll;
   height: 64vh;
+}
+.scroll-58vh {
+  overflow-y: scroll;
+  height: 58vh;
+}
+.loading {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100vh;
+  z-index: 99999;
+  background-color: #202124;
+}
+.loading::after {
+  content: "Loading...";
+  display: flex;
+  height: 100vh;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+}
+
+/* CSS for animated bouncing loader. */
+@keyframes bouncing-loader {
+  to {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+.bouncing-loader {
+  display: flex;
+  justify-content: center;
+  background-color: rgba(26, 115, 232, 0.902);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  align-items: end;
+}
+
+.bouncing-loader > .bounce {
+  width: 3px;
+  height: 3px;
+  margin: 0.5rem 0.1rem;
+  background: white;
+  border-radius: 50%;
+  animation: bouncing-loader 0.4s infinite alternate;
+}
+
+.bouncing-loader > .notBounce {
+  width: 3px;
+  height: 3px;
+  margin: 0.7rem 0.1rem;
+  background: white;
+  border-radius: 50%;
+}
+
+.bouncing-loader > .bounce:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+/* CSS for animated pulse in initials. */
+@keyframes pulse {
+  0% {
+    transform: scale(0.1);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+.pulses > span {
+  border-radius: 50%;
+  position: absolute;
+  margin: auto auto;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.pulses > span:nth-child(1) {
+  animation: pulse 2s infinite;
+}
+.pulses > span:nth-child(2) {
+  animation: pulse 2s infinite 0.3s;
+}
+.pulses > span:nth-child(3) {
+  animation: pulse 2s infinite 0.6s;
+}
+.pulses > span:nth-child(4) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

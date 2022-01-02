@@ -3,20 +3,33 @@
   </app-check-media-device>
 </div>
 
-<div class="dark-brown" *ngIf="client.isJoined  && !leave">
-  <app-streams [isPresenting]="isPresenting" [localUserUid]="client.rtcClient.uid" [remoteStreams]="remoteStreams"
-    [localUserCamera]="client.camera" [localUserAudio]="client.audio" [localVolumeLevel]="client.localVolumeLevel"
-    [closePeopleList]="closePeopleList" (emitCloseList)="closePeopleList = $event">
+<div *ngIf="client.isJoined  && !leave" class="dark-brown d-flex p-3">
+  <app-streams class="w-100" [ngClass]="{'streams' : isPresenting}" [localUserName]="username"
+    [isPresenting]="isPresenting" [localUserUid]="client.rtcClient.uid" [remoteStreams]="remoteStreams"
+    [localUserAudio]="client.audio" [localVolumeLevel]="client.localVolumeLevel" [pinUser]="pinUserDetail">
   </app-streams>
+  <div class="people-list" *ngIf="closePeopleList">
+    <app-people-list class="w-100"
+      [localUser]="{uid: client.rtcClient.uid, level: client.localVolumeLevel, isAudio: client.audio, userName: username}"
+      [peopleList]="remoteStreams" (emitCloseList)="closePeopleList = $event"
+      (emitSendMessageToPeer)="sendMessageToPeer($event)" (emitPinKey)="pinKey($event)">
+    </app-people-list>
+  </div>
+  <div class="people-list" *ngIf="closeChatList">
+    <app-group-chat class="w-100" [memberName]="username" [memberId]="client.rtcClient.uid"
+      [chatMessages]="client.chatMessages" (emitCloseChat)="closeChatList = $event"
+      (emitSendMessage)="sendMessage($event)">
+    </app-group-chat>
+  </div>
 </div>
 
 
 <div *ngIf="client.isJoined && !leave">
-  <app-controls [peopleList]="closePeopleList" [audio]="client.audio" [camera]="client.camera"
-    [isScreenPresenting]="screenShareClient ? screenShareClient.isScreenPresenting : false"
+  <app-controls [peopleList]="closePeopleList" [chatList]="closeChatList" [audio]="client.audio"
+    [camera]="client.camera" [isScreenPresenting]="screenShareClient ? screenShareClient.isScreenPresenting : false"
     [isPresenting]="isPresenting" [disableVideo]="client.disableVideo" (emitLeaveChannel)="leaveChannel()"
     (emitVideoChannel)="videoChannel()" (emitScreenShare)="screenShare()" (emitStopScreenShare)="stopScreenShare()"
-    (emitMuteVolume)="muteVolume()" (emitPeopleList)="closePeopleList = $event">
+    (emitMuteVolume)="muteVolume()" (emitPeopleList)="closePeopleList = $event" (emitChatList)="closeChatList = $event">
   </app-controls>
 </div>
 
@@ -26,3 +39,5 @@
   </app-leave>
 </div>
 <app-toaster *ngIf="toasterMsg" [toasterMsg]="toasterMsg" (emitToasterMsg)="toasterMsg = $event"></app-toaster>
+<div [ngClass]="{'loading': client.loading}">
+</div>

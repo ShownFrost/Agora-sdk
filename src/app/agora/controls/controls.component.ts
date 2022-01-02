@@ -30,6 +30,7 @@ export class ControlsComponent implements OnInit, OnDestroy {
   @Input() isPresenting = false;
   @Input() disableVideo = false;
   @Input() peopleList = true;
+  @Input() chatList = true;
 
   /**
    * Emit the leave channel, audio, camera, ScreenPresenting flag, people list.
@@ -40,6 +41,7 @@ export class ControlsComponent implements OnInit, OnDestroy {
   @Output() emitStopScreenShare = new EventEmitter<boolean>();
   @Output() emitMuteVolume = new EventEmitter<boolean>();
   @Output() emitPeopleList = new EventEmitter<boolean>();
+  @Output() emitChatList = new EventEmitter<boolean>();
 
   /**
    * Show the realtime clock.
@@ -88,7 +90,19 @@ export class ControlsComponent implements OnInit, OnDestroy {
    */
   userList(): void {
     this.peopleList = !this.peopleList;
+    this.chatList = false;
+    this.emitChatList.emit(false);
     this.emitPeopleList.emit(this.peopleList);
+  }
+
+  /**
+   * Toggle the user list and emit the flag.
+   */
+  groupChatList(): void {
+    this.chatList = !this.chatList;
+    this.peopleList = false;
+    this.emitPeopleList.emit(false);
+    this.emitChatList.emit(this.chatList);
   }
 
   /**
