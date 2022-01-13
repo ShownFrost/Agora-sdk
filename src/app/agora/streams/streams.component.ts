@@ -1,17 +1,13 @@
 /**
  * Angular imports.
  */
-import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, HostListener } from '@angular/core';
-
-/**
- * Agora rtc sdk imports.
- */
-import { UID } from 'agora-rtc-sdk-ng';
+import { Component, Input, OnInit, OnDestroy, HostListener } from '@angular/core';
 
 /**
  * Model imports.
  */
 import { RemoteStream } from '../models/remoteStream';
+import { localStream } from 'src/app/agora/models/localStream';
 
 /**
  * Rxjs imports.
@@ -29,16 +25,11 @@ import { fromEvent, Subscription } from 'rxjs';
 export class StreamsComponent implements OnInit, OnDestroy {
 
   /**
-   * Received presenting, localUserId, remote stream,
-   * localUserCamera, localUserAudio, localVolumeLevel
+   * Received presenting, localUser details, remote stream.
    */
-  @Input() isPresenting = false;
-  @Input() localUserUid: undefined | UID;
   @Input() remoteStreams: { [name: number]: RemoteStream } = {};
-  @Input() localUserAudio = false;
-  @Input() localVolumeLevel = 0;
-  @Input() localUserName!: string;
   @Input() pinUser!: { status: boolean, key: number };
+  @Input() localStream!: localStream;
 
   /**
    * Fullscreen mode flag.
@@ -63,7 +54,6 @@ export class StreamsComponent implements OnInit, OnDestroy {
   @HostListener('window:dblclick', ['$event'])
   fullscreenchange(): void {
     if (!this.fullscreenMode) {
-      console.log('this.fullscreen');
       this.fullscreen();
     } else {
       this.closeFullscreen();

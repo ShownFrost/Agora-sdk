@@ -10,6 +10,11 @@ import { Subscription, timer } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 /**
+ * Models import.
+ */
+import { localStream } from 'src/app/agora/models/localStream';
+
+/**
  * All the controls of the streaming like
  * mute, camera, screenShare, Time, List etc.
  */
@@ -24,14 +29,11 @@ export class ControlsComponent implements OnInit, OnDestroy {
    * Received the audio, camera, ScreenPresenting flag and
    * disableVideo flag which wait for the camera to open people list.
    */
-  @Input() audio = false;
-  @Input() camera = false;
   @Input() isScreenPresenting = false;
-  @Input() isPresenting = false;
   @Input() disableVideo = false;
   @Input() peopleList = true;
   @Input() chatList = true;
-
+  @Input() localStream!: localStream;
   /**
    * Emit the leave channel, audio, camera, ScreenPresenting flag, people list.
    */

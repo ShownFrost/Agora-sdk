@@ -9,6 +9,10 @@ export class RemoteStream {
    * Uid and Name of remote streamer.
    */
   private uid: number;
+  private _number: number;
+  get number(): number {
+    return this._number;
+  }
   private _name: string;
   get name(): string {
     return this._name;
@@ -110,7 +114,7 @@ export class RemoteStream {
   /**
    * Initiate the remote.
    */
-  constructor(uid: number, name: string, isPresenting: boolean, audio: boolean, video: boolean, volume: number, stream: any, pin: boolean) {
+  constructor(uid: number, name: string, isPresenting: boolean, audio: boolean, video: boolean, volume: number, stream: any, pin: boolean, number: number = 0) {
     this.uid = uid;
     this._isPresenting = isPresenting;
     this._isAudio = audio;
@@ -120,5 +124,6 @@ export class RemoteStream {
     this.initial = name;
     this.stream = stream;
     this._pin = pin;
+    this._number = number;
   };
 }

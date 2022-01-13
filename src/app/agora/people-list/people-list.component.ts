@@ -12,6 +12,7 @@ import { UID } from 'agora-rtc-sdk-ng';
  * Model imports.
  */
 import { RemoteStream } from '../models/remoteStream';
+import { localStream } from 'src/app/agora/models/localStream';
 
 /**
  * Show the active People list.
@@ -27,7 +28,7 @@ export class PeopleListComponent {
    * Receive the people list and local user details.
    */
   @Input() peopleList: { [name: number]: RemoteStream } = {};
-  @Input() localUser!: { uid: UID | undefined; level: number; isAudio: boolean; userName: string };
+  @Input() localStream!: localStream;
 
   /**
    * Emit close list flag and peer to peer message.

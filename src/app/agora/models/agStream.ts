@@ -11,7 +11,12 @@ import { ReplaySubject } from "rxjs";
 /**
  * Agora RTM imports.
  */
-import AgoraRTM, { RtmChannel, RtmClient, RtmMessage } from 'agora-rtm-sdk'
+import AgoraRTM, { RtmChannel, RtmClient } from 'agora-rtm-sdk'
+
+/**
+ * Modal imports.
+ */
+import { ChatMessages } from "src/app/agora/models/localStream";
 
 /**
  * Create the instance of the agora stream.
@@ -30,7 +35,6 @@ export class AgStream {
   private localAudioTrack!: IMicrophoneAudioTrack;
   private localVideoTrack!: ICameraVideoTrack;
   private uid!: UID;
-  private screenShareUid!: number | string;
   private localScreenTrack!: any;
   private rtmClient: RtmClient;
   private rtmChannel!: RtmChannel;
@@ -75,7 +79,6 @@ export class AgStream {
     return this._camera;
   }
   set camera(val: boolean) {
-    console.log('val', val,);
     if (!val) {
       this.disableVideo = true;
       this.publishLocalVideoTracks();
@@ -120,7 +123,7 @@ export class AgStream {
   public trackEnded = new ReplaySubject<string>();
   public errors = new ReplaySubject<{ code: number | string; msg: string }>();
   public peerToPeerMsg = new ReplaySubject<{ text: string, messageType: string; sendPeerId: string }>();
-  public chatMessages: { memberId: string; memberName: string; message: string; messageType: string; timestamp: number }[] = [];
+  public chatMessages: ChatMessages[] = [];
 
 
   /**
@@ -132,7 +135,7 @@ export class AgStream {
     this.token = token;
     this.isScreenPresenting = isScreenPresenting;
     this.rtcClient = this.createLocalClient();
-    this.rtmClient = AgoraRTM.createInstance(appId)
+    this.rtmClient = AgoraRTM.createInstance(appId);
     if (!isScreenPresenting) {
       this.userPublish();
     }
@@ -179,11 +182,10 @@ export class AgStream {
   async loginRTM(username: string): Promise<void> {
     await this.rtmClient.login({ uid: this.uid.toString() })
       .then(async () => {
-        await this.rtmClient.setLocalUserAttributes({ ['Name']: username });
+        await this.rtmClient.setLocalUserAttributes({ name: username, isPresenting: '0' });
         await this.createChannel();
       })
       .catch((res: any) => {
-        console.log('loginRTM error', res.message);
         this.errors.next({ code: res.code, msg: res.message });
       });
   }
@@ -191,10 +193,10 @@ export class AgStream {
   /**
    * Login into the client rtm for screen share.
    */
-  async screenShareLoginRTM(username: string, uid: string): Promise<void> {
+  async screenShareLoginRTM(username: string, uid: string, presentingLength: string): Promise<void> {
     await this.rtmClient.login({ uid: uid })
       .then(async () => {
-        await this.rtmClient.setLocalUserAttributes({ ['Name']: username });
+        await this.rtmClient.setLocalUserAttributes({ name: username, isPresenting: '1', number: presentingLength});
       })
       .catch((res: any) => {
         this.errors.next({ code: res.code, msg: res.message });
@@ -236,11 +238,10 @@ export class AgStream {
    */
   rtmEventListener(): void {
     this.rtmChannel.on('ChannelMessage', async (message: any, memberId: string) => {
-      console.log("ChannelMessage", message, memberId);
       let name = '';
       await this.getUserAttribute(memberId)
         .then((value) => {
-          name = value.Name;
+          name = value.name;
         })
         .catch((reason: any) => console.log("getUserAttribute error", reason));
       this.chatMessages.push({
@@ -266,12 +267,10 @@ export class AgStream {
   /**
    * Join the Local screen share client channel.
    */
-  async joinScreenShareChannel(appId: string, channel: string, token: string, username: string, uid: number) {
-    await this.rtcClient.join(appId, channel, null, uid)
+  async joinScreenShareChannel(appId: string, channel: string, token: string, username: string, presentingLength: number) {
+    await this.rtcClient.join(appId, channel, null)
       .then(async (value: UID) => {
-        this.screenShareUid = value;
-        await this.publishScreenTracks();
-        this.screenShareLoginRTM(username, uid.toString());
+        this.screenShareLoginRTM(username, value.toString(), presentingLength.toString());
         this.isScreenPresenting = true;
       })
       .catch((res: any) => {
@@ -282,7 +281,7 @@ export class AgStream {
   /**
    * Create the screen video track for the screen share.
    */
-  private async publishScreenTracks(): Promise<void> {
+  async publishScreenTracks(): Promise<void> {
     AgoraRTC.createScreenVideoTrack({
       /**
        * Set the encoder configurations. For details, see the API description.
@@ -455,7 +454,7 @@ export class AgStream {
       user.audioTrack?.stop()
       user.videoTrack?.stop()
     });
-
+    this.rtmClient.logout();
     await this.rtcClient.leave();
     this.isJoined = false;
     this.loading = false;

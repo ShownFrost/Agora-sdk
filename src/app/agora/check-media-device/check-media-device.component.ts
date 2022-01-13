@@ -1,7 +1,7 @@
 /**
  * Angular imports.
  */
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, OnDestroy, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 /**
@@ -17,7 +17,7 @@ import AgoraRTC, { ICameraVideoTrack, IMicrophoneAudioTrack } from 'agora-rtc-sd
   templateUrl: './check-media-device.component.html',
   styleUrls: ['./check-media-device.component.scss']
 })
-export class CheckMediaDeviceComponent implements OnInit {
+export class CheckMediaDeviceComponent implements OnInit, OnDestroy {
 
   /**
    * Output the joinChannel.
@@ -155,14 +155,16 @@ export class CheckMediaDeviceComponent implements OnInit {
     if (this.joinForm.invalid) {
       return;
     }
-
-    clearInterval(this.interval);
     this.emitJoinChannel.emit({
       camera: this._camera,
       audio: this._audio,
       userName: this.joinForm.value.userName
     });
+  }
+
+  ngOnDestroy(): void {
     this.camera = false;
     this.audio = false;
+    clearInterval(this.interval);
   }
 }

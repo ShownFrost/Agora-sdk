@@ -1,7 +1,8 @@
 /**
  * Angular imports.
  */
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 
 /**
  * agora rtc sdk imports.
@@ -24,6 +25,7 @@ import { ApiService } from 'src/app/services/api/api.service';
  */
 import { AgStream } from '../../agora/models/agStream';
 import { RemoteStream } from '../../agora/models/remoteStream';
+import { WithScreenSharePipe } from '../models/withScreenShare.pipe';
 
 /**
  * Main component where Rtc client is create and ready to join.
@@ -36,17 +38,12 @@ import { RemoteStream } from '../../agora/models/remoteStream';
 export class MainComponent implements OnInit, OnDestroy {
 
   /**
-   * Receive the appId, channel and token of agora.
+   * The appId, channel, screenShareUid and token of agora.
    */
-  @Input() appId = '';
-  @Input() channel = '';
-  @Input() token = '';
-  @Input() username = '';
-
-  /**
-   * Emit the redirect to credentials.
-   */
-  @Output() emitRedirectToCredentials = new EventEmitter<boolean>();
+  private appId!: string;
+  private channel!: string;
+  // private screenShareUid!: number | string;
+  private token = '';
 
   /**
    * Subscription for remote info update, left, join, error, volume indicator.
@@ -60,10 +57,10 @@ export class MainComponent implements OnInit, OnDestroy {
   private networkQualitySub!: Subscription;
   private peerToPeerMsgSub!: Subscription;
   private playRemoteSub!: Subscription;
-  private screenShareUid = 10000;
+  private activateRouteSub!: Subscription;
 
   /**
-   * setter and getter for presenting flag.
+   * setter and getter for presenting flag, pin user and username.
    */
   private _pinUserDetail = { status: false, key: 0 };
   get pinUserDetail(): { status: boolean, key: number } {
@@ -79,7 +76,14 @@ export class MainComponent implements OnInit, OnDestroy {
   get isPresenting(): boolean {
     return this._isPresenting;
   }
-
+  private _username!: string;
+  get username(): string {
+    return this._username;
+  }
+  private _initials!: string;
+  get initials(): string {
+    return this._initials;
+  }
   /**
    * Public flag for client and close people list
    * ScreenShare client,, remote stream, toaster msg, leave flag.
@@ -95,12 +99,20 @@ export class MainComponent implements OnInit, OnDestroy {
   /**
    * Create necessary instances.
    */
-  constructor(private apiService: ApiService) { }
+  constructor(private apiService: ApiService, private route: ActivatedRoute, private router: Router) { }
 
   /**
    * Create the agora client and initiate the listeners event.
    */
   ngOnInit(): void {
+    this.activateRouteSub = this.route.params
+      .subscribe((params) => {
+        this.appId = params.id;
+      });
+    this.activateRouteSub = this.route.queryParams
+      .subscribe((queryParams) => {
+        this.channel = queryParams.cname;
+      });
     this.client = new AgStream(this.appId, this.channel, this.token, false);
   }
 
@@ -115,19 +127,20 @@ export class MainComponent implements OnInit, OnDestroy {
         defer(() => { return from(this.client.getUserAttribute(uid.toString())) }).pipe(
           retry(5),
         ).subscribe({
-          next: (value: { Name: string }) => {
-            const name = value.Name;
+          next: (value: { name: string, isPresenting: string, number: string}) => {
+            const name = value.name;
             this.toasterMsg = name + ' is joined the call';
-            if (uid === this.screenShareUid) {
+            if (value.isPresenting === '1') {
+              // this.screenShareUid = uid;
               this.toasterMsg = name + ' start Presenting the screen';
-              this.remoteStreams[uid] = new RemoteStream(uid, name ? name : 'anonymous', true, user.hasAudio, user.hasVideo, 0, user, false);
+              this.remoteStreams[uid] = new RemoteStream(uid, name ? name : 'anonymous', true, user.hasAudio, user.hasVideo, 0, user, false, Number(value.number));
               this.isPresenting = true;
             } else {
               this.remoteStreams[uid] = new RemoteStream(uid, name ? name : 'anonymous', false, user.hasAudio, user.hasVideo, 0, user, false);
             }
           },
           error: (err: any) => {
-            console.log('Joined errororor', err)
+            console.log('Joined error', err);
           }
         })
       });
@@ -139,13 +152,16 @@ export class MainComponent implements OnInit, OnDestroy {
       }
       this.toasterMsg = this.remoteStreams[id].name + ' is left the call';
       if (this.remoteStreams.hasOwnProperty(id)) {
-        if (id === this.screenShareUid) {
+        if (this.remoteStreams[id].isPresenting) {
           this.isPresenting = false;
           this.toasterMsg = this.remoteStreams[id].name + ' stop presenting the screen';
         }
         delete this.remoteStreams[id];
       }
       for (const [key, value] of Object.entries(this.remoteStreams)) {
+        if (this.remoteStreams[Number(key)].isPresenting) {
+          this.isPresenting = true;
+        }
         if (this.remoteStreams[Number(key)].stream.hasVideo) {
           const remoteVideoTrack = this.remoteStreams[Number(key)].stream?.videoTrack;
           this.playRemoteStream(remoteVideoTrack, Number(key));
@@ -189,6 +205,7 @@ export class MainComponent implements OnInit, OnDestroy {
       }
     })
     this.errorsSub = this.client.errors.subscribe(async (res: { code: string | number; msg: string; }) => {
+      console.log('errorsSub', res);
       switch (res.code) {
         case 'CAN_NOT_GET_GATEWAY_SERVER':
           this.toasterMsg = res.msg;
@@ -245,7 +262,8 @@ export class MainComponent implements OnInit, OnDestroy {
    * Join the the created channel initially.
    */
   async joinChannel(event: { camera: boolean; audio: boolean; userName: string }): Promise<void> {
-    this.username = event.userName;
+    this._username = event.userName;
+    this._initials = this.username.charAt(0).toUpperCase();
     await this.client.joinChannel(this.appId, this.channel, this.token, event.audio, event.camera, this.username);
     this.internalEventListener();
     this.apiService.appId = this.appId;
@@ -264,6 +282,7 @@ export class MainComponent implements OnInit, OnDestroy {
     await this.client.leaveCall();
     this.isPresenting = false;
     this.leave = true;
+    this.router.navigate(['leave']);
   }
 
   /**
@@ -286,16 +305,22 @@ export class MainComponent implements OnInit, OnDestroy {
   /**
    * Create the new client fo the screen share and join the same channel.
    */
-  async screenShare(): Promise<void> {
+  async joinShare(): Promise<void> {
+    const withScreenSharePipe = new WithScreenSharePipe();
+    const screenShareRemotes = withScreenSharePipe.transform(this.remoteStreams);
+    const max = [0];
+    for (const key in screenShareRemotes) {
+      max.push(screenShareRemotes[key].number);
+    }
     this.screenShareClient = new AgStream(this.appId, this.channel, this.token, true);
-    await this.screenShareClient.joinScreenShareChannel(this.appId, this.channel, this.token, this.username, this.screenShareUid);
+    await this.screenShareClient.joinScreenShareChannel(this.appId, this.channel, this.token, this.username, Math.max(...max) + 1);
   }
 
   /**
-   * Emit the redirect to credentials.
+   * Create the screen track for sharing and publish it.
    */
-  redirectToCredentials(): void {
-    this.emitRedirectToCredentials.emit(true);
+  createScreenShareTrack() {
+    this.screenShareClient.publishScreenTracks();
   }
 
   /**
@@ -348,7 +373,7 @@ export class MainComponent implements OnInit, OnDestroy {
     this.playRemoteSub = of(remoteVideoTrack).pipe(delay(100))
       .subscribe(remoteVideoTrack => {
         remoteVideoTrack?.play("remote_stream_" + this.remoteStreams[key].stream.uid);
-      })
+      });
   }
 
   /**
@@ -378,6 +403,9 @@ export class MainComponent implements OnInit, OnDestroy {
     }
     if (this.playRemoteSub) {
       this.playRemoteSub.unsubscribe();
+    }
+    if (this.activateRouteSub) {
+      this.activateRouteSub.unsubscribe();
     }
   }
 }

@@ -3,6 +3,12 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+
+/**
+ * Service imports.
+ */
+import { ApiService } from './../../services/api/api.service';
 
 /**
  * Agora credential form which required appId, Channel Name and Token.
@@ -32,7 +38,7 @@ export class AgoraCredentialsComponent implements OnInit {
   /**
    * Create necessary instances.
    */
-  constructor(private formBuilder: FormBuilder) { }
+  constructor(private formBuilder: FormBuilder, private router: Router, private apiService: ApiService) { }
 
   /**
    * Initialize the agora Form.
@@ -57,6 +63,10 @@ export class AgoraCredentialsComponent implements OnInit {
       return;
     }
     this.login = true;
+    this.apiService.appId = this.appId?.value;
+    this.apiService.cname = this.channelName?.value;
+    this.router.navigate(['agora/' + this.apiService.appId],
+      { queryParams: { cname: this.apiService.cname } });
   }
 
   /**

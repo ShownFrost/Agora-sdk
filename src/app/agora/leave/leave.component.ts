@@ -1,7 +1,13 @@
 /**
  * Angular imports.
  */
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+
+/**
+ * Service imports.
+ */
+import { ApiService } from './../../services/api/api.service';
 
 /**
  * Leave screen and left after getting any error aur user leave the call.
@@ -14,18 +20,21 @@ import { Component, EventEmitter, Output } from '@angular/core';
 export class LeaveComponent {
 
   /**
-   * Emit the rejoin and back to credential page.
+   * Create necessary instances.
+   * Redirect to credential if appId is not present.
+   * Too lazy to implement the guard for this.
    */
-  @Output() emitRejoin = new EventEmitter<boolean>();
-  @Output() emitCredentials = new EventEmitter<boolean>();
+  constructor(private apiService: ApiService, private router: Router) {
+    if (!this.apiService.appId) {
+      this.router.navigate(['/']);
+    }
+  }
 
   /**
-   * Emit the rejoin and back to credential page.
+   * redirect to the check media screen.
    */
   rejoin(): void {
-    this.emitRejoin.emit(true);
-  }
-  credentials(): void {
-    this.emitCredentials.emit(true);
+    this.router.navigate(['agora/' + this.apiService.appId],
+      { queryParams: { cname: this.apiService.cname } });
   }
 }
