@@ -38,7 +38,7 @@ Shut it down manually with `Ctrl-C`.
 * Remove Other user from the call.
 * Voice Indicator(beta)
 * Group Chat.
-* Pin perticular User screen.
+* Pin particular User screen.
 
 ## Further help
 
